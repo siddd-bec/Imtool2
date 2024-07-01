@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Send Communication</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+
+        form {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .form-group {
+            flex: 1 1 calc(50% - 10px);
+            margin-bottom: 10px;
+        }
+
+        .form-group.full-width {
+            flex-basis: 100%;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+
+        .form-group input[type="submit"] {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .form-group input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Send Communication</h2>
+    <form id="communicationForm" action="/send-email" method="post">
+        <div class="form-group">
+            <label for="incident">Incident:</label>
+            <input type="text" id="incident" name="incident" required>
+        </div>
+        <div class="form-group">
+            <label for="priority">Priority:</label>
+            <input type="text" id="priority" name="priority" required>
+        </div>
+        <div class="form-group">
+            <label for="startTime">Start time:</label>
+            <input type="text" id="startTime" name="startTime" placeholder="YYYY-MM-DD HH:mm" required>
+        </div>
+        <div class="form-group">
+            <label for="endTime">End time:</label>
+            <input type="text" id="endTime" name="endTime" placeholder="YYYY-MM-DD HH:mm" required>
+        </div>
+        <div class="form-group">
+            <label for="impact">Impact:</label>
+            <input type="text" id="impact" name="impact" required>
+        </div>
+        <div class="form-group">
+            <label for="previousSummaries">Predefined Templates:</label>
+            <select id="previousSummaries">
+                <option value="">Draft a new message</option>
+                <option
+                    value="Hi All,\nWe are experiencing a P1/P2/P3 incident for __(Product name). The issue started at __(time in GMT) and is being triaged with help of PRE/SRE/RE teams,">
+                    Hi All, We are experiencing a P1/P2/P3 incident for __(Product name)...</option>
+                <option value="Hi All,\nWe are currently investigating ---format2">Hi All, We are currently
+                    investigating ---format2</option>
+                <option value="Hi All,\nWe are currently investigating ---format3">Hi All, We are currently
+                    investigating ---format3</option>
+                <option value="Hi All,\nWe are currently investigating ---format4">Hi All, We are currently
+                    investigating ---format4</option>
+                <option value="Hi All,\nWe are currently investigating ---format5">Hi All, We are currently
+                    investigating ---format5</option>
+            </select>
+        </div>
+        <div class="form-group full-width">
+            <label for="incidentSummary">Incident Summary:</label>
+            <textarea id="incidentSummary" name="incidentSummary" rows="4" required></textarea>
+        </div>
+        <div class="form-group full-width">
+            <input type="submit" value="Send Email">
+        </div>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropdown = document.getElementById('previousSummaries');
+            const summaryTextarea = document.getElementById('incidentSummary');
+
+            dropdown.addEventListener('change', () => {
+                summaryTextarea.value = dropdown.value;
+            });
+        });
+    </script>
+</body>
+
+</html>
