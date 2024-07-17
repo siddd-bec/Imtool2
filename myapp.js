@@ -1,15 +1,23 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const nodemailer = require('nodemailer');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const port = 3000;
 
-// Previous incident summaries (this could be from a database in a real application)
+// Configure multer for file upload
+const upload = multer({ dest: 'uploads/' });
+
+// Previous incident summaries
 const previousSummaries = [
-    "Incident 1 summary...",
-    "Incident 2 summary...",
-    "Incident 3 summary..."
+    "Hi All,\nWe are experiencing a P1/P2/P3 incident for __(Product name). The issue started at __(time in GMT) and is being triaged with help of PRE/SRE/RE teams,",
+    "Hi All,\nWe are currently investigating ---format2",
+    "Hi All,\nWe are currently investigating ---format3",
+    "Hi All,\nWe are currently investigating ---format4",
+    "Hi All,\nWe are currently investigating ---format5"
 ];
 
 // Body parser middleware
@@ -18,7 +26,12 @@ app.use(bodyParser.json());
 
 // Serve the static index.html file
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Serve the send_rca.html file
+app.get('/send-rca', (req, res) => {
+    res.sendFile(path.join(__dirname, 'send_rca.html'));
 });
 
 // Serve previous summaries
@@ -28,24 +41,25 @@ app.get('/previous-summaries', (req, res) => {
 
 // Handle form submission to send email
 app.post('/send-email', (req, res) => {
-    const { recipient, incident, priority, startTime, endTime, impact, incidentSummary } = req.body;
+    const { recipientEmails, incident, priority, startTime, endTime, impact, incidentSummary } = req.body;
 
-    // Create reusable transporter object using the default SMTP transport
+    // Split the recipient emails by comma and trim any extra spaces
+    const recipients = recipientEmails.split(',').map(email => email.trim());
+
     let transporter = nodemailer.createTransport({
-        host: 'smtp.yourhost.com', // Your SMTP host
-        port: 587, // Your SMTP port
-        secure: false, // false for TLS; true for SSL
+        host: 'smtp.yourhost.com',
+        port: 587,
+        secure: false,
         auth: {
-            user: 'your-email@example.com', // Your email address
-            pass: 'your-password' // Your email password or app password
+            user: 'your-email@example.com',
+            pass: 'your-password'
         }
     });
 
-    // Setup email data with unicode symbols
     let mailOptions = {
-        from: 'your-email@example.com', // Sender address
-        to: recipient, // Recipient address from form input
-        subject: `Incident Communication: ${incident}`, // Subject line
+        from: 'your-email@example.com',
+        to: recipients,
+        subject: `Incident Communication: ${incident}`,
         text: `
             Priority: ${priority}
             Start Time: ${startTime}
@@ -54,11 +68,59 @@ app.post('/send-email', (req, res) => {
             
             Incident Summary:
             ${incidentSummary}
-        ` // Plain text body
+        `
     };
 
-    // Send email
     transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.log(error);
+            res.status(500).send('Error sending email');
+        } else {
+            console.log('Email sent: ' + info.response);
+            res.status(200).send('Email sent successfully');
+        }
+    });
+});
+
+// Handle form submission to send email with attachment
+app.post('/send-rca', upload.single('attachment'), (req, res) => {
+    const { email, subject, message } = req.body;
+    const attachmentPath = req.file.path;
+
+    // Split the recipient emails by comma and trim any extra spaces
+    const recipients = email.split(',').map(email => email.trim());
+
+    let transporter = nodemailer.createTransport({
+        host: 'smtp.yourhost.com',
+        port: 587,
+        secure: false,
+        auth: {
+            user: 'your-email@example.com',
+            pass: 'your-password'
+        }
+    });
+
+    let mailOptions = {
+        from: 'your-email@example.com',
+        to: recipients,
+        subject: subject,
+        text: message,
+        attachments: [
+            {
+                filename: req.file.originalname,
+                path: attachmentPath
+            }
+        ]
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        // Delete the file after sending email
+        fs.unlink(attachmentPath, (err) => {
+            if (err) {
+                console.error('Error deleting the file:', err);
+            }
+        });
+
         if (error) {
             console.log(error);
             res.status(500).send('Error sending email');
